@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/my_nav"
+    app:startDestination="@id/recipeFragment">
+    <fragment
+        android:id="@+id/recipeFragment"
+        android:name="com.inovasiti.makankini.RecipeFragment"
+        android:label="Recipes"
+        tools:layout="@layout/fragment_recipe" />
+
+    <fragment
+        android:id="@+id/favouriteRecipesFragment"
+        android:name="com.inovasiti.makankini.FavouriteRecipesFragment"
+        android:label="Fav Recipes"
+        tools:layout="@layout/fragment_favourite_recipes" />
+
+    <fragment
+        android:id="@+id/foodFragment"
+        android:name="com.inovasiti.makankini.FoodFragment"
+        android:label="Food"
+        tools:layout="@layout/fragment_food" />
+
+</navigation>
