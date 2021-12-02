@@ -1,4 +1,4 @@
-package com.example.foody.models
+package com.inovasiti.makankini.model
 
 import com.google.gson.annotations.SerializedName
 

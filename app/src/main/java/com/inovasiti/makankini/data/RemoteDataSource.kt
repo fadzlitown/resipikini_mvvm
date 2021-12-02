@@ -1,7 +1,7 @@
 package com.inovasiti.makankini.data
 
-import com.example.foody.models.FoodRecipe
 import com.inovasiti.makankini.data.network.ApiService
+import com.inovasiti.makankini.model.FoodRecipe
 import retrofit2.Response
 import javax.inject.Inject
 

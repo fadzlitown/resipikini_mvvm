@@ -8,18 +8,18 @@ import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.foody.models.FoodRecipe
 import com.inovasiti.makankini.data.Repository
+import com.inovasiti.makankini.model.FoodRecipe
 import com.inovasiti.makankini.util.NetworkResult
 import kotlinx.coroutines.launch
 import retrofit2.Response
 
 class MainViewModel @ViewModelInject constructor(
     private val repo: Repository,
-    application: BaseApplication
+    application: Application
 ) : AndroidViewModel(application) {
 
-    private var recipesLiveData: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
+    var recipesLiveData: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
 
     fun getRecipes(queries: Map<String, String>) = viewModelScope.launch {
         getRecipesCall(queries)
