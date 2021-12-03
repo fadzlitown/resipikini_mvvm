@@ -21,6 +21,7 @@ class RecipeCustomBinding {
             imageView.load(imageUrl){
                 //when is loaded, will have some effects
                 crossfade(600)
+                error(R.drawable.ic_placeholder)
             }
         }
 

@@ -5,12 +5,12 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.inovasiti.makankini.data.Repository
+import com.inovasiti.makankini.data.database.RecipeEntity
 import com.inovasiti.makankini.model.FoodRecipe
 import com.inovasiti.makankini.util.NetworkResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Response
 
@@ -19,25 +19,46 @@ class MainViewModel @ViewModelInject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    var recipesLiveData: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
+    /** Room local */
+    val readRecipesLocal : LiveData<List<RecipeEntity>> = repo.local.readDatabase().asLiveData()
+
+    /** Retrofit remote */
+    var recipesResponseLiveData: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
 
     fun getRecipes(queries: Map<String, String>) = viewModelScope.launch {
         getRecipesCall(queries)
     }
 
     private suspend fun getRecipesCall(queries: Map<String, String>) {
-        recipesLiveData.value = NetworkResult.Loading()
+        recipesResponseLiveData.value = NetworkResult.Loading()
 
         if (hasInternet()) {
             try {
                 val response = repo.remote.getRecipes(queries)
-                recipesLiveData.value = handleResponse(response)
+                recipesResponseLiveData.value = handleResponse(response)
+
+                val recipes = recipesResponseLiveData.value!!.data
+                if(recipes!=null){
+                    storeOfflineRecipes(recipes)
+                }
+
             } catch (e: Exception) {
-                recipesLiveData.value = NetworkResult.Error("Recipe Not Found")
+                recipesResponseLiveData.value = NetworkResult.Error("Recipe Not Found")
             }
 
         } else {
-            recipesLiveData.value = NetworkResult.Error("No Internet Connection")
+            recipesResponseLiveData.value = NetworkResult.Error("No Internet Connection")
+        }
+    }
+
+    private fun storeOfflineRecipes(recipes: FoodRecipe) {
+        val recipeEntity = RecipeEntity(recipes)    //create our recipe entity
+        insertRecipes(recipeEntity)
+    }
+
+    private fun insertRecipes(recipeEntity: RecipeEntity){
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.local.insertRecipes(recipeEntity)
         }
     }
 
