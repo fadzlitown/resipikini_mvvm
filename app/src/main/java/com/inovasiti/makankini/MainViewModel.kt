@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
+import androidx.room.Query
 import com.inovasiti.makankini.data.Repository
 import com.inovasiti.makankini.data.database.RecipeEntity
 import com.inovasiti.makankini.model.FoodRecipe
@@ -24,9 +25,31 @@ class MainViewModel @ViewModelInject constructor(
 
     /** Retrofit remote */
     var recipesResponseLiveData: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
+    var searchRecipesResponseLiveData : MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
+
 
     fun getRecipes(queries: Map<String, String>) = viewModelScope.launch {
         getRecipesCall(queries)
+    }
+
+    fun searchRecipes(searchQuery: Map<String,String>) = viewModelScope.launch {
+        searchRecipeCall(searchQuery)
+    }
+
+    private suspend fun searchRecipeCall(searchQuery: Map<String,String>) {
+        searchRecipesResponseLiveData.value = NetworkResult.Loading()
+
+        if (hasInternet()) {
+            try {
+                val response = repo.remote.searchRecipe(searchQuery)
+                searchRecipesResponseLiveData.value = handleResponse(response)
+
+            } catch (e: Exception) {
+                searchRecipesResponseLiveData.value = NetworkResult.Error("Recipe Not Found")
+            }
+        } else {
+            searchRecipesResponseLiveData.value = NetworkResult.Error("No Internet Connection")
+        }
     }
 
     private suspend fun getRecipesCall(queries: Map<String, String>) {

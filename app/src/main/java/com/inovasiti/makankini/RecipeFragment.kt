@@ -2,17 +2,15 @@ package com.inovasiti.makankini
 
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.inovasiti.makankini.MainViewModel
 import com.inovasiti.makankini.databinding.FragmentRecipeBinding
 import com.inovasiti.makankini.util.Constants.Companion.DEFAULT_DIET_TYPE
 import com.inovasiti.makankini.util.Constants.Companion.DEFAULT_MEAL_TYPE
@@ -28,7 +26,7 @@ import kotlinx.coroutines.launch
  * create an instance of this fragment.
  */
 @AndroidEntryPoint
-class RecipeFragment : Fragment() {
+class RecipeFragment : Fragment(), SearchView.OnQueryTextListener {
 
     // RecipeFragmentArgs will be auto-generated if we add the action arguments inside the NAVIGATION XML
     private val args by navArgs<RecipeFragmentArgs>()
@@ -58,6 +56,7 @@ class RecipeFragment : Fragment() {
         binding.lifecycleOwner = this
         binding.viewModelLayout = viewModel
 
+        setHasOptionsMenu(true)
         setupRV()
         readDatabase()
         binding.recipeFab.setOnClickListener {
@@ -114,6 +113,28 @@ class RecipeFragment : Fragment() {
                 }
             }
         })
+    }
+
+    private fun searchRecipeAPI(searchQuery: String) {
+        binding.recyclerview.showShimmer()
+        viewModel.searchRecipes(recipesViewModel.applySearchQuery(searchQuery))
+        viewModel.searchRecipesResponseLiveData.observe(viewLifecycleOwner, { response ->
+            when (response) {
+                is NetworkResult.Success -> {
+                    hideShimmerEffect()
+                    val recipe = response.data
+                    recipe?.let { mAdapter.setRecipe(recipe) }
+                }
+                is NetworkResult.Error -> {
+                    hideShimmerEffect()
+                    readLocalData()
+                    Toast.makeText(requireContext(), response.message.toString(), Toast.LENGTH_SHORT).show()
+                }
+                is NetworkResult.Loading -> {
+                    binding.recyclerview.showShimmer()
+                }
+            }
+        })
 
     }
 
@@ -131,8 +152,28 @@ class RecipeFragment : Fragment() {
         binding.recyclerview.hideShimmer()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.recipes_menu, menu)
+        val search = menu.findItem(R.id.menu_search)
+        val searchView = search.actionView as? SearchView
+        searchView?.isSubmitButtonEnabled = true
+        searchView?.setOnQueryTextListener(this)
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        if (query != null) {
+            searchRecipeAPI(query)
+        }
+        return true
+    }
+
+    override fun onQueryTextChange(p0: String?): Boolean {
+        return true
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         _binding = null // avoid memory leak
     }
+
 }

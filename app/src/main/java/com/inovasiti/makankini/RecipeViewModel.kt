@@ -8,6 +8,8 @@ import com.inovasiti.makankini.data.RecipeDataStoreRepository
 import com.inovasiti.makankini.util.Constants
 import com.inovasiti.makankini.util.Constants.Companion.DEFAULT_DIET_TYPE
 import com.inovasiti.makankini.util.Constants.Companion.DEFAULT_MEAL_TYPE
+import com.inovasiti.makankini.util.Constants.Companion.QUERY_NUMBER
+import com.inovasiti.makankini.util.Constants.Companion.QUERY_SEARCH
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -38,6 +40,16 @@ class RecipeViewModel @ViewModelInject constructor(application: Application, val
         queries[Constants.QUERY_API_KEY] = Constants.API_KEY
         queries[Constants.QUERY_TYPE] = mealType    //will apply from default constant OR selected type on filter by user
         queries[Constants.QUERY_DIET] = dietType
+        queries[Constants.QUERY_ADD_RECIPE_INFORMATION] = "true"
+        queries[Constants.QUERY_FILL_INGREDIENTS] = "true"
+        return queries
+    }
+
+    fun applySearchQuery(searchQuery: String): HashMap<String,String>{
+        val queries: HashMap<String,String> = HashMap()
+        queries[QUERY_SEARCH] = searchQuery
+        queries[QUERY_NUMBER] = Constants.DEFAULT_MEAL_NO
+        queries[Constants.QUERY_API_KEY] = Constants.API_KEY
         queries[Constants.QUERY_ADD_RECIPE_INFORMATION] = "true"
         queries[Constants.QUERY_FILL_INGREDIENTS] = "true"
         return queries
