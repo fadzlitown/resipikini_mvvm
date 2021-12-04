@@ -8,7 +8,15 @@
         android:id="@+id/recipeFragment"
         android:name="com.inovasiti.makankini.RecipeFragment"
         android:label="Recipes"
-        tools:layout="@layout/fragment_recipe" />
+        tools:layout="@layout/fragment_recipe" >
+        <action
+            android:id="@+id/action_recipeFragment_to_recipeBottomSheetDialogFragment"
+            app:destination="@id/recipeBottomSheetDialogFragment" />
+        <argument
+            android:name="toBottomSheet"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
 
     <fragment
         android:id="@+id/favouriteRecipesFragment"
@@ -21,5 +29,14 @@
         android:name="com.inovasiti.makankini.FoodFragment"
         android:label="Food"
         tools:layout="@layout/fragment_food" />
+    <dialog
+        android:id="@+id/recipeBottomSheetDialogFragment"
+        android:name="com.inovasiti.makankini.RecipeBottomSheetDialogFragment"
+        android:label="fragment_recipe_bottom_sheet_dialog"
+        tools:layout="@layout/fragment_recipe_bottom_sheet_dialog" >
+        <action
+            android:id="@+id/action_recipeBottomSheetDialogFragment_to_recipeFragment"
+            app:destination="@id/recipeFragment" />
+    </dialog>
 
 </navigation>

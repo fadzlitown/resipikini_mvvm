@@ -2,25 +2,22 @@ package com.inovasiti.makankini
 
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.inovasiti.makankini.MainViewModel
 import com.inovasiti.makankini.databinding.FragmentRecipeBinding
-import com.inovasiti.makankini.util.Constants.Companion.API_KEY
-import com.inovasiti.makankini.util.Constants.Companion.QUERY_ADD_RECIPE_INFORMATION
-import com.inovasiti.makankini.util.Constants.Companion.QUERY_API_KEY
-import com.inovasiti.makankini.util.Constants.Companion.QUERY_DIET
-import com.inovasiti.makankini.util.Constants.Companion.QUERY_FILL_INGREDIENTS
-import com.inovasiti.makankini.util.Constants.Companion.QUERY_NUMBER
-import com.inovasiti.makankini.util.Constants.Companion.QUERY_TYPE
+import com.inovasiti.makankini.util.Constants.Companion.DEFAULT_DIET_TYPE
+import com.inovasiti.makankini.util.Constants.Companion.DEFAULT_MEAL_TYPE
 import com.inovasiti.makankini.util.NetworkResult
 import com.inovasiti.makankini.util.observeOnce
-import com.inovasiti.makankini.MainViewModel as VM
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_recipe.view.*
 import kotlinx.coroutines.launch
@@ -33,15 +30,22 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class RecipeFragment : Fragment() {
 
+    // RecipeFragmentArgs will be auto-generated if we add the action arguments inside the NAVIGATION XML
+    private val args by navArgs<RecipeFragmentArgs>()
+
     private var _binding: FragmentRecipeBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: VM
+    private lateinit var viewModel: MainViewModel
+    private lateinit var recipesViewModel: RecipeViewModel
+
     private val mAdapter by lazy { RecipeAdapter() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity()).get(VM::class.java)
+        viewModel = ViewModelProvider(requireActivity()).get(MainViewModel::class.java)
+        recipesViewModel = ViewModelProvider(requireActivity()).get(RecipeViewModel::class.java)
+
     }
 
     override fun onCreateView(
@@ -56,6 +60,10 @@ class RecipeFragment : Fragment() {
 
         setupRV()
         readDatabase()
+        binding.recipeFab.setOnClickListener {
+            findNavController().navigate(R.id.action_recipeFragment_to_recipeBottomSheetDialogFragment)
+        }
+
         return binding.root
     }
 
@@ -67,9 +75,9 @@ class RecipeFragment : Fragment() {
 
     private fun readDatabase() {
         lifecycleScope.launch {
-            viewModel.readRecipesLocal.observeOnce(viewLifecycleOwner, {
-                database ->
-                if(database.isNotEmpty()){
+            viewModel.readRecipesLocal.observeOnce(viewLifecycleOwner, { database ->
+                //if db not empty OR bottomSheet is not passing anything (means we apply nothing)
+                if (database.isNotEmpty() && !args.toBottomSheet) {
                     Log.d("RecipesFragment", "readDatabase called!")
                     mAdapter.setRecipe(database[0].foodRecipe)
                     hideShimmerEffect()
@@ -80,25 +88,15 @@ class RecipeFragment : Fragment() {
         }
     }
 
-    fun applyQueries(): HashMap<String, String> {
-        val queries: HashMap<String, String> = HashMap()
+    private var mealType = DEFAULT_MEAL_TYPE
+    private var dietType = DEFAULT_DIET_TYPE
 
-        queries[QUERY_NUMBER] = "50"
-        queries[QUERY_API_KEY] = API_KEY
-        queries[QUERY_TYPE] = "snack"
-        queries[QUERY_DIET] = "vegan"
-        queries[QUERY_ADD_RECIPE_INFORMATION] = "true"
-        queries[QUERY_FILL_INGREDIENTS] = "true"
-
-        return queries
-    }
 
     private fun callAPI() {
         Log.d("RecipesFragment", "API called!")
-        viewModel.getRecipes(applyQueries())
-        viewModel.recipesResponseLiveData.observe(viewLifecycleOwner, {
-            response ->
-            when(response){
+        viewModel.getRecipes(recipesViewModel.applyQueries())
+        viewModel.recipesResponseLiveData.observe(viewLifecycleOwner, { response ->
+            when (response) {
                 is NetworkResult.Success -> {
                     hideShimmerEffect()
                     response.data?.let {
@@ -119,11 +117,10 @@ class RecipeFragment : Fragment() {
 
     }
 
-    private fun readLocalData(){
+    private fun readLocalData() {
         lifecycleScope.launch {
-            viewModel.readRecipesLocal.observe(viewLifecycleOwner, {
-                    database ->
-                if(database.isNotEmpty()){
+            viewModel.readRecipesLocal.observe(viewLifecycleOwner, { database ->
+                if (database.isNotEmpty()) {
                     mAdapter.setRecipe(database[0].foodRecipe)
                 }
             })
